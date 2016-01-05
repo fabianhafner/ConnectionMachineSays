@@ -1,0 +1,25 @@
+cordova.define('cordova/plugin_list', function(require, exports, module) {
+module.exports = [
+    {
+        "file": "plugins/cordova-plugin-bluetooth-serial/www/bluetoothSerial.js",
+        "id": "cordova-plugin-bluetooth-serial.bluetoothSerial",
+        "pluginId": "cordova-plugin-bluetooth-serial",
+        "clobbers": [
+            "window.bluetoothSerial"
+        ]
+    },
+    {
+        "file": "plugins/cordova-plugin-whitelist/whitelist.js",
+        "id": "cordova-plugin-whitelist.whitelist",
+        "pluginId": "cordova-plugin-whitelist",
+        "runs": true
+    }
+];
+module.exports.metadata = 
+// TOP OF METADATA
+{
+    "cordova-plugin-bluetooth-serial": "0.4.5",
+    "cordova-plugin-whitelist": "1.0.0"
+}
+// BOTTOM OF METADATA
+});
