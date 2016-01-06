@@ -27,16 +27,41 @@
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
         <link rel="stylesheet" type="text/css" href="css/index.css" />
-        <title>Hello World</title>
+        <title>Connection Machine Says</title>
     </head>
     <body>
         <div class="app">
-            <h1>PhoneGap</h1>
-            <div id="someContent" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
+            <h1>Connection Machine Says</h1>
+            <div id="status" class="blink">
+                <p class="event listening">Preparing Device</p>
+                <p class="event received">Device Ready</p>
+				<p class="bluetooth waiting">Waiting for Device</p>
+				<p class="bluetooth searching">Searching ledpi-teco</p>
+				<p class="bluetooth connecting">Connecting to ledpi-teco</p>
+				<p class="bluetooth ready">Connected</p>
+				<p class="bluetooth noPi">ledpi-teco not found."</p>
+				<p class="bluetooth noList">Detection of bonded devices failed."</p>
+				<p class="bluetooth noConnection">Can't connect to ledpi-teco."</p>
             </div>
         </div>
+		<div class="gameWrapper">
+			<table class="gameBoard">
+				<tr>
+					<td><input id="button1" class="gameButton" type="button" value="1" onclick="registerClick(1);"/></td>
+					<td><input id="button2" class="gameButton" type="button" value="2" onclick="registerClick(2);"/></td>
+				</tr>
+				<tr>
+					<td><input id="button3" class="gameButton" type="button" value="3" onclick="registerClick(3);"/></td>
+					<td><input id="button4" class="gameButton" type="button" value="4" onclick="registerClick(4);"/></td>
+				</tr>
+			</table>
+			<br>
+			<div class="controls">
+				<input id="start" class="controlButton" type="button" value="Start" onclick="playSequence();"/><br>
+				<input id="toggle" class="controlButton" type="button" value="Toggle Buttons" onclick="toggleButtons();"/>
+				
+			</div>
+		</div>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript">

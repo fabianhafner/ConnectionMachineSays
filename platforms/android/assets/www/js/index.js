@@ -1,5 +1,5 @@
 // This script will connect to the Connection Machine or the Connection Machine Emulator.
-// It will show a 3x3 dot on the LEDs depending on the accelerometer values of the phone.
+// It will use the LEDs to display Simon Says inputs depending on the game state on the phone.
 // Connection and communication is done according to the protocol specification
 // linked on http://www.teco.edu/cm/dev/:
 // http://www.teco.edu/wp-content/uploads/2014/10/teco_led_matrix_protocol.pdf
@@ -8,25 +8,45 @@
 // The MAC address of the device. Gets filled in from the list of bonded devices.
 var macAddress;
 
-// Coordinate of currently activated LED.
-var xLed;
-var yLed;
+// The two-dimensional matrix representing the LED panels
+var xy = [];
+
+// Indicates whether the buttons are active and clickable or a sequence is played automatically at the moment. (Default: false)
+var autoplay = false;
+
+// Indicates whether a game is active at the moment. (Default: false)
+var game = false;
+
+// The current sequence
+var sequence = [1,2,3,4];
 
 // Start listening for the deviceready-Event.
 function initialize() {
 	document.addEventListener('deviceready', onDeviceReady, false);
+	onDeviceReady();
 }
 
 // Event received. We may now use PhoneGap APIs.
 function onDeviceReady() {
-	var parentElement = document.getElementById('someContent');
+	var parentElement = document.getElementById('status');
 	var listeningElement = parentElement.querySelector('.listening');
 	var receivedElement = parentElement.querySelector('.received');
+	var waitingElement = parentElement.querySelector('.waiting');
+	var searchingElement = parentElement.querySelector('.searching');
 	listeningElement.setAttribute('style', 'display:none;');
 	receivedElement.setAttribute('style', 'display:block;');
+	waitingElement.setAttribute('style', 'display:none;');
+	searchingElement.setAttribute('style', 'display:block;');
 	
-	// Register for accelerometer events.
-	registerAccelerometer();
+	// Create 24x24 matrix. We can fill this matrix with values between 0 and 255 to
+	// represent the brightness of the LED.
+	var rows = 24;
+	for (var i  = 0; i < rows; i++){
+		 xy[i] = [];
+		 for (var j = 0; j < rows; j++){
+			xy[i][j] = 0;
+		 }
+	}
 
 	// Check bonded devices. (Note: This does not start a BT scan, it only lists the bonded devices.)
 	bluetoothSerial.list(listSuccess, listFailure);
@@ -34,50 +54,35 @@ function onDeviceReady() {
 	console.log('Received Events: ' + 'deviceready');
 }
 
-// Get current device orientation and map it to X and Y LED range of CM (0-24).
-function registerAccelerometer() {
-	window.ondevicemotion = function(event) { 
-		ax = event.accelerationIncludingGravity.x;
-		ay = event.accelerationIncludingGravity.y;
-		az = event.accelerationIncludingGravity.z;
-		
-		// Linear map values (-8/+8 to 0/23).
-		var horizontal = 0 + ((23 - 0) / (8 - (-8))) * (ay - (-8));
-		var vertical = 0 + ((23 - 0) / (8 - (-8))) * (ax - (-8));
-		
-		if (horizontal <= 0) {
-			xLed = 0;
-		} else if (horizontal >= 23) {
-			xLed = 23;
-		} else {
-			xLed = Math.round(horizontal);
-		}
-		
-		// Make sure we have an integer between 0 and 23.
-		if (vertical <= 0) {
-			yLed = 0;
-		} else if (vertical >= 23) {
-			yLed = 23;
-		} else {
-			yLed = Math.round(vertical);
-		}
-	}
-}
-
 // Gets called when list of bonded devices was received.
 function listSuccess(pairedDevices) {	
 
 	// Loop through devices and loop for device with name "ledpi-teco".
-	// This has no error handling! When the devices are not paired, it won't work!
 	for(var i = 0; i < pairedDevices.length ; i++){
 		var item = pairedDevices[i];
+		console.log('Bonded device: ' + item.name);
 		if(item.name === "ledpi-teco"){
 			macAddress = item.id;
+			connectLedPi();
+			return;
 		} 
-		console.log('Bonded device: ' + item.name);
 	}
 	
-	console.log('Found device with name ledpi-teco: MAC address is ' + macAddress);
+	//No device found
+	console.log('No device named ledpi-teco found.');
+	
+	// set status message
+	var parentElement = document.getElementById('status');
+	var searchingElement = parentElement.querySelector('.searching');
+	var noPiElement = parentElement.querySelector('.noPi');
+	searchingElement.setAttribute('style', 'display:none;');
+	noPiElement.setAttribute('style', 'display:block;');
+}
+
+// Try to connect to ledpi-teco device.
+function connectLedPi() {
+
+console.log('Found device with name ledpi-teco: MAC address is ' + macAddress);
 	
 	// Connect to device.
 	console.log('Connecting to ' + macAddress);
@@ -87,11 +92,22 @@ function listSuccess(pairedDevices) {
 // Called when listing of bonded devices fails.
 function listFailure() {	
 	console.log('Listing bonded devices failed.');
+	var parentElement = document.getElementById('status');
+	var searchingElement = parentElement.querySelector('.searching');
+	var noPiElement = parentElement.querySelector('.noList');
+	searchingElement.setAttribute('style', 'display:none;');
+	noListElement.setAttribute('style', 'display:block;');
 }
 
 // Called when connection to device is established.
 function connectSuccess() {
 	console.log('Connected to ' + macAddress);
+	
+	var parentElement = document.getElementById('status');
+	var searchingElement = parentElement.querySelector('.searching');
+	var connectingElement = parentElement.querySelector('.connecting');
+	searchingElement.setAttribute('style', 'display:none;');
+	connectingElement.setAttribute('style', 'display:block;');
 	
 	// Write handshake.
 	handshake();
@@ -100,6 +116,11 @@ function connectSuccess() {
 // Called when connection to device has failed.
 function connectFailure() {
 	console.log('Received Events: ' + 'connectFailure');
+	var parentElement = document.getElementById('status');
+	var connectingElement = parentElement.querySelector('.connecting');
+	var noConnectionElement = parentElement.querySelector('.noConnection');
+	connectingElement.setAttribute('style', 'display:none;');
+	noConnectionElement.setAttribute('style', 'display:block;');
 }
 
 // This function will try to initiate the handshake as described in
@@ -109,7 +130,7 @@ function handshake() {
 	var xSize = 24;
 	var ySize = 24;
 	var colorMode = 0;
-	var appName = "PhoneGap BT Example App";
+	var appName = "Connection Machine Says App";
 	var nameLength = appName.length;
 	var packetSize = 5 + nameLength;
 	
@@ -136,6 +157,11 @@ function handshake() {
 // Called when bluetooth send (handshake) fails.
 function sendHandshakeFailure() {
 	console.log("Handshake write failed");
+	var parentElement = document.getElementById('status');
+	var connectingElement = parentElement.querySelector('.connecting');
+	var noConnectionElement = parentElement.querySelector('.noConnection');
+	connectingElement.setAttribute('style', 'display:none;');
+	noConnectionElement.setAttribute('style', 'display:block;');
 }
 
 // Called when bluetooth send (handshake) was successful.
@@ -147,6 +173,11 @@ function sendHandshakeSuccess() {
 // Called when reading of handshake response fails.
 function handshakeReadFailure() {
 	console.log("Handshake read failed");
+	var parentElement = document.getElementById('status');
+	var connectingElement = parentElement.querySelector('.connecting');
+	var noConnectionElement = parentElement.querySelector('.noConnection');
+	connectingElement.setAttribute('style', 'display:none;');
+	noConnectionElement.setAttribute('style', 'display:block;');
 }
 
 // Called when reading of handshake response was successful.
@@ -160,29 +191,17 @@ function handshakeReadSuccess(resp) {
 	if (responseCode == 0) {
 		var timer = setInterval(function() { writeData() }, 1000 / maxFPS);
 	}
+	
+	// Set status message
+	var parentElement = document.getElementById('status');
+	var connectingElement = parentElement.querySelector('.connecting');
+	var readyElement = parentElement.querySelector('.ready');
+	connectingElement.setAttribute('style', 'display:none;');
+	readyElement.setAttribute('style', 'display:block;');
 }
 
 // Send one frame to CM.
 function writeData() {	
-
-	// Create 24x24 matrix. We can fill this matrix with values between 0 and 255 to
-	// represent the brightness of the LED.
-	var xy = [];
-	var rows = 24;
-	for (var i  = 0; i < rows; i++){
-		 xy[i] = [];
-	}
-	
-	for (var i = 0; i < 24; i++) {
-		for (var j = 0; j < 24; j++) {
-			if ((i == yLed || i+1 == yLed || i-1 == yLed) && 
-				(j == xLed || j+1 == xLed || j-1 == xLed)) {
-				xy[i][j] = 255;
-			} else {
-				xy[i][j] = 0;
-			}
-		}	
-	}
 
 	// Make matrix into something the Connection Machine understands and send data.
 	var buffer = new ArrayBuffer(576);
@@ -207,5 +226,94 @@ function sendFailure() {
 	console.log('Received Events: ' + 'sendFailure');
 }
 
+// Register button presses.
+function registerClick(button) {
+	if (!autoplay){
+		updateMatrix(button);
+	}
+}
 
+//Lights panels and buttons according to the current sequence.
+function playSequence() {
+	if (autoplay) {
+		return;
+	}
+	autoplay = true;
+	var current = 0;
+	toggleButtons();
+	var player = setInterval(autoLight, 500);
+	function autoLight() {
+		if(current == sequence.length) {
+			clearInterval(player);
+			updateMatrix(-1);
+			updateButtons(-1);
+			toggleButtons;
+			autoplay = false;
+		} else {
+			updateMatrix(sequence[current]);
+			updateButtons(sequence[current]);
+			current++;
+		}
+	}
+}
+
+//Toggles button states.
+function toggleButtons() {
+	var buttons = document.getElementsByClassName("gameButton");
+	for (var i = 0; i < buttons.length; i++) {
+		buttons[i].disabled = !buttons[i].disabled;
+	}
+}
+
+// Changes the lit buttons.
+function updateButtons(button) {
+	var buttons = document.getElementsByClassName("gameButton");
+	for (var i = 0; i < 4; i++) {
+		if (button == 0 || button == i+1) {
+			buttons[i].style.backgroundColor = "darkred";
+		} else {
+			buttons[i].style.backgroundColor = "black";
+		}
+	}
+}
+
+// Changes the lit panel.
+function updateMatrix(panel){
+	var xStart = 0;
+	var xStop = 0;
+	var yStart = 0;
+	var yStop = 0;
+	if (panel == 1) {
+		xStop = 12;
+		yStop = 12;
+	} else if (panel == 2) {
+		xStop = 12;
+		yStart = 12;
+		yStop = 24;
+	} else if (panel == 3) {
+		xStart = 12;
+		xStop = 24;
+		yStop = 12
+	} else if (panel == 4) {
+		xStart = 12;
+		xStop = 24;
+		yStart = 12;
+		yStop = 24;
+	} else if (panel == -1) {
+		xStart = 24;
+		xStop = 24;
+		yStart = 24;
+		yStop = 24;
+	}
+	
+	for (var i  = 0; i < 24; i++){
+		 for (var j = 0; j < 24; j++){
+			if(i >= xStart && i < xStop && j >= yStart && j < yStop) {
+				xy[i][j] = 255;
+			} else {
+				xy[i][j] = 0;
+			}
+		 }
+	}
+}
 
