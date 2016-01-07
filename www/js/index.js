@@ -244,7 +244,7 @@ function registerClick(button) {
 	clearTimeout(timer);
 	updateMatrix(button);
 	updateButtons(button);
-	timer = setTimeout(clearScreen, 400);
+	timer = setTimeout(clearScreen, 300);
 	if (game) {
 		if (button == sequence[currentPosition]){
 			correctButton();
