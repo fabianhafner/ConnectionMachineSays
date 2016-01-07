@@ -8,22 +8,30 @@
 // The MAC address of the device. Gets filled in from the list of bonded devices.
 var macAddress;
 
+// Indicates whether the Connection Machine is connected or not. (To reduce function calls in offline mode.)
+var connected = false;
+
 // The two-dimensional matrix representing the LED panels
 var xy = [];
 
 // Indicates whether the buttons are active and clickable or a sequence is played automatically at the moment. (Default: false)
 var autoplay = false;
 
-// Indicates whether a game is active at the moment. (Default: false)
+// Indicates whether a game is active at the moment.
 var game = false;
 
 // The current sequence
-var sequence = [1,2,3,4];
+var sequence = [];
+
+// The current position in the sequence.
+var currentPosition = 0;
+
+// Timer used to clear buttons after clicks.
+var timer;
 
 // Start listening for the deviceready-Event.
 function initialize() {
 	document.addEventListener('deviceready', onDeviceReady, false);
-	onDeviceReady();
 }
 
 // Event received. We may now use PhoneGap APIs.
@@ -198,6 +206,8 @@ function handshakeReadSuccess(resp) {
 	var readyElement = parentElement.querySelector('.ready');
 	connectingElement.setAttribute('style', 'display:none;');
 	readyElement.setAttribute('style', 'display:block;');
+	
+	connected = true;
 }
 
 // Send one frame to CM.
@@ -228,8 +238,19 @@ function sendFailure() {
 
 // Register button presses.
 function registerClick(button) {
-	if (!autoplay){
-		updateMatrix(button);
+	if (autoplay){
+		return;
+	}
+	clearTimeout(timer);
+	updateMatrix(button);
+	updateButtons(button);
+	timer = setTimeout(clearScreen, 400);
+	if (game) {
+		if (button == sequence[currentPosition]){
+			correctButton();
+		} else {
+			loseGame();
+		}
 	}
 }
 
@@ -240,28 +261,32 @@ function playSequence() {
 	}
 	autoplay = true;
 	var current = 0;
-	toggleButtons();
-	var player = setInterval(autoLight, 500);
+	setButtonActive(false);
+	var autoplayer = setInterval(autoLight, 500);
 	function autoLight() {
 		if(current == sequence.length) {
-			clearInterval(player);
-			updateMatrix(-1);
-			updateButtons(-1);
-			toggleButtons;
+			clearInterval(autoplayer);
+			setButtonActive(true);
 			autoplay = false;
 		} else {
 			updateMatrix(sequence[current]);
 			updateButtons(sequence[current]);
 			current++;
+			setTimeout(clearScreen, 400);
 		}
 	}
 }
 
-//Toggles button states.
-function toggleButtons() {
+function clearScreen() {
+	updateMatrix(-1);
+	updateButtons(-1);
+}
+
+//Sets button state. true = active, false = disabled
+function setButtonActive(isActive) {
 	var buttons = document.getElementsByClassName("gameButton");
 	for (var i = 0; i < buttons.length; i++) {
-		buttons[i].disabled = !buttons[i].disabled;
+		buttons[i].disabled = !isActive;
 	}
 }
 
@@ -272,17 +297,22 @@ function updateButtons(button) {
 		if (button == 0 || button == i+1) {
 			buttons[i].style.backgroundColor = "darkred";
 		} else {
-			buttons[i].style.backgroundColor = "black";
+			buttons[i].removeAttribute('style');
 		}
 	}
 }
 
-// Changes the lit panel.
+// Updates the LED screens. 1 to 4 set the corresponding panel, -1 turns all panels off, everything else sets all panels.
 function updateMatrix(panel){
+
+	if (!connected) {
+		return;
+	}
+	
 	var xStart = 0;
-	var xStop = 0;
+	var xStop = 24;
 	var yStart = 0;
-	var yStop = 0;
+	var yStop = 24;
 	if (panel == 1) {
 		xStop = 12;
 		yStop = 12;
@@ -317,3 +347,37 @@ function updateMatrix(panel){
 	}
 }
 
+// Starts a new game.
+function startGame() {
+	if (game) {
+		return;
+	}
+	game = true;
+	clearScreen();
+	sequence = [];
+	increaseSequence();
+	currentPosition = 0;
+	playSequence();
+}
+
+// Makes the sequence longer.
+function increaseSequence() {
+	sequence.push(Math.floor((Math.random() * 4) + 1));
+}
+
+function correctButton() {
+	currentPosition++;
+	if (currentPosition == sequence.length) {
+		setButtonActive(false);
+		increaseSequence();
+		currentPosition = 0;
+		setTimeout(playSequence, 500);
+	}
+}
+
+function loseGame() {
+	setButtonActive(false);
+	game = false;
+	sequence = [0,0,0,0];
+	setTimeout(playSequence, 300);
+}

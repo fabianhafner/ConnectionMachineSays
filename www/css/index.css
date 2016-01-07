@@ -28,19 +28,19 @@ body {
     font-family:'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
     font-size:12px;
     height:100%;
-    margin:0px;
+    margin:0px 0px 0px 0px;
     padding:0px;
     width:100%;
+	position:fixed;
+	overflow:hidden;
 }
 
 .gameWrapper {
     position:absolute;             /* position in the center of the screen */
     left:50%;
     top:50%;
-	/* margin:-5em 0px 0px -5em; */
 	padding:0px;
 	text-align:center;
-	
 }
 
 .gameBoard {
@@ -58,12 +58,12 @@ body {
 
 }
 
-.gameButton:hover {
+/* .gameButton:hover {
 	background-color: darkred;
-}
+} */
 
 .gameButton:active  {
-	background-color: red;
+	background-color: darkred;
 }
 
 .controls {
