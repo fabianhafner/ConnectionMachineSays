@@ -288,7 +288,9 @@ function playSequence() {
 			clearInterval(autoplayer);
 			setButtonActive(true);
 			autoplay = false;
-			document.getElementById('machineActivePopup').close();
+			if(connected){
+				document.getElementById('machineActivePopup').close();
+			}
 		} else {
 			updateMatrix(sequence[current]);
 			updateButtons(sequence[current]);
@@ -380,6 +382,7 @@ function startGame() {
 	currentPosition = 0;
 	document.getElementById('scoreText').innerHTML = "Current round: ";
 	document.getElementById('scoreScore').innerHTML = sequence.length;
+	updateHighscore();
 	playSequence();
 }
 
@@ -412,38 +415,20 @@ function loseGame() {
 
 // Updates the highscore.
 function updateHighscore() {
-	if (sequence.lentgh > highscore){
+	if (sequence.length > highscore){
 		highscore = sequence.length;
-		saveHighscore(highscore);
+		window.localStorage.setItem('highscore', highscore);
 		document.getElementById('highscoreScore').innerHTML = highscore;
 	}
 }
 
-// Saves the current highscore to a cookie.
-function saveHighscore(score) {
-	document.cookie = "highscore="+score+"; expires=Fri, 31 Dec 9999 23:59:59 GMT";
-}
-
-// Tries to read the highscore from a cookie and sets the global var highscore to that value. Sets highscore to 0 and creates a new cookie if no cookie is found.
+// Tries to read the highscore from localStorage and sets the global var highscore to that value. Sets highscore to 0 and saves it to localStorage if nothing was found.
 function checkForHighscore() {
-	var highscoreCookie = readCookie("highscore");
-	if (highscoreCookie == "") {
+	if (!window.localStorage.getItem('highscore')) {
 		highscore = 0;
-		saveHighscore(0);
+		window.localStorage.setItem('highscore', highscore);
 	} else {
-		highscore = parseInt(highscoreCookie);
+		highscore = window.localStorage.getItem('highscore');
 	}
 	document.getElementById('highscoreScore').innerHTML = highscore;
-}
-
-// Reads a cookie.
-function readCookie(name) {
-	var nameEQ = name + "=";
-	var ca = document.cookie.split(';');
-	for(var i=0;i < ca.length;i++) {
-		var c = ca[i];
-		while (c.charAt(0)==' ') c = c.substring(1,c.length);
-		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-	}
-	return "";
 }

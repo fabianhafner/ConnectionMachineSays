@@ -29,9 +29,13 @@ var currentPosition = 0;
 // Timer used to clear buttons after clicks.
 var timer;
 
+// Current highscore
+var highscore;
+
 // Start listening for the deviceready-Event.
 function initialize() {
 	document.addEventListener('deviceready', onDeviceReady, false);
+	checkForHighscore();
 }
 
 // Event received. We may now use PhoneGap APIs.
@@ -129,6 +133,7 @@ function connectFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // This function will try to initiate the handshake as described in
@@ -170,6 +175,7 @@ function sendHandshakeFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // Called when bluetooth send (handshake) was successful.
@@ -186,6 +192,7 @@ function handshakeReadFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // Called when reading of handshake response was successful.
@@ -207,7 +214,17 @@ function handshakeReadSuccess(resp) {
 	connectingElement.setAttribute('style', 'display:none;');
 	readyElement.setAttribute('style', 'display:block;');
 	
-	connected = true;
+	connectionChange(true);
+}
+
+// Changes the curent connection mode
+function connectionChange(isConnected){
+	connected = isConnected;
+	if(connected){
+		document.getElementById('mode').innerHTML="Connection Machine Mode";
+	} else {
+		document.getElementById('mode').innerHTML="Offline Mode";
+	}
 }
 
 // Send one frame to CM.
@@ -244,7 +261,7 @@ function registerClick(button) {
 	clearTimeout(timer);
 	updateMatrix(button);
 	updateButtons(button);
-	timer = setTimeout(clearScreen, 400);
+	timer = setTimeout(clearScreen, 300);
 	if (game) {
 		if (button == sequence[currentPosition]){
 			correctButton();
@@ -262,12 +279,18 @@ function playSequence() {
 	autoplay = true;
 	var current = 0;
 	setButtonActive(false);
+	if (connected){
+		document.getElementById('machineActivePopup').showModal();
+	}
 	var autoplayer = setInterval(autoLight, 500);
 	function autoLight() {
 		if(current == sequence.length) {
 			clearInterval(autoplayer);
 			setButtonActive(true);
 			autoplay = false;
+			if(connected){
+				document.getElementById('machineActivePopup').close();
+			}
 		} else {
 			updateMatrix(sequence[current]);
 			updateButtons(sequence[current]);
@@ -357,6 +380,8 @@ function startGame() {
 	sequence = [];
 	increaseSequence();
 	currentPosition = 0;
+	document.getElementById('scoreText').innerHTML = "Current round: ";
+	document.getElementById('scoreScore').innerHTML = sequence.length;
 	playSequence();
 }
 
@@ -365,19 +390,44 @@ function increaseSequence() {
 	sequence.push(Math.floor((Math.random() * 4) + 1));
 }
 
+// When the correct button is pressed.
 function correctButton() {
 	currentPosition++;
 	if (currentPosition == sequence.length) {
 		setButtonActive(false);
 		increaseSequence();
+		document.getElementById('scoreScore').innerHTML = sequence.length;
+		updateHighscore();
 		currentPosition = 0;
 		setTimeout(playSequence, 500);
 	}
 }
 
+// When a false button is pressed and the player loses the game.
 function loseGame() {
 	setButtonActive(false);
 	game = false;
+	document.getElementById('scoreText').innerHTML = "Last game: ";
 	sequence = [0,0,0,0];
 	setTimeout(playSequence, 300);
+}
+
+// Updates the highscore.
+function updateHighscore() {
+	if (sequence.length > highscore){
+		highscore = sequence.length;
+		window.localStorage.setItem('highscore', highscore);
+		document.getElementById('highscoreScore').innerHTML = highscore;
+	}
+}
+
+// Tries to read the highscore from localStorage and sets the global var highscore to that value. Sets highscore to 0 and saves it to localStorage if nothing was found.
+function checkForHighscore() {
+	if (!window.localStorage.getItem('highscore')) {
+		highscore = 0;
+		window.localStorage.setItem('highscore', highscore);
+	} else {
+		highscore = window.localStorage.getItem('highscore');
+	}
+	document.getElementById('highscoreScore').innerHTML = highscore;
 }
