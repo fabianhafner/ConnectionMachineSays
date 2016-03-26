@@ -29,9 +29,13 @@ var currentPosition = 0;
 // Timer used to clear buttons after clicks.
 var timer;
 
+// Current highscore
+var highscore;
+
 // Start listening for the deviceready-Event.
 function initialize() {
 	document.addEventListener('deviceready', onDeviceReady, false);
+	checkForHighscore();
 }
 
 // Event received. We may now use PhoneGap APIs.
@@ -129,6 +133,7 @@ function connectFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // This function will try to initiate the handshake as described in
@@ -170,6 +175,7 @@ function sendHandshakeFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // Called when bluetooth send (handshake) was successful.
@@ -186,6 +192,7 @@ function handshakeReadFailure() {
 	var noConnectionElement = parentElement.querySelector('.noConnection');
 	connectingElement.setAttribute('style', 'display:none;');
 	noConnectionElement.setAttribute('style', 'display:block;');
+	connectionChange(false);
 }
 
 // Called when reading of handshake response was successful.
@@ -207,7 +214,17 @@ function handshakeReadSuccess(resp) {
 	connectingElement.setAttribute('style', 'display:none;');
 	readyElement.setAttribute('style', 'display:block;');
 	
-	connected = true;
+	connectionChange(true);
+}
+
+// Changes the curent connection mode
+function connectionChange(isConnected){
+	connected = isConnected;
+	if(connected){
+		document.getElementById('mode').innerHTML="Connection Machine Mode";
+	} else {
+		document.getElementById('mode').innerHTML="Offline Mode";
+	}
 }
 
 // Send one frame to CM.
@@ -262,12 +279,16 @@ function playSequence() {
 	autoplay = true;
 	var current = 0;
 	setButtonActive(false);
+	if (connected){
+		document.getElementById('machineActivePopup').showModal();
+	}
 	var autoplayer = setInterval(autoLight, 500);
 	function autoLight() {
 		if(current == sequence.length) {
 			clearInterval(autoplayer);
 			setButtonActive(true);
 			autoplay = false;
+			document.getElementById('machineActivePopup').close();
 		} else {
 			updateMatrix(sequence[current]);
 			updateButtons(sequence[current]);
@@ -357,6 +378,8 @@ function startGame() {
 	sequence = [];
 	increaseSequence();
 	currentPosition = 0;
+	document.getElementById('scoreText').innerHTML = "Current round: ";
+	document.getElementById('scoreScore').innerHTML = sequence.length;
 	playSequence();
 }
 
@@ -365,19 +388,62 @@ function increaseSequence() {
 	sequence.push(Math.floor((Math.random() * 4) + 1));
 }
 
+// When the correct button is pressed.
 function correctButton() {
 	currentPosition++;
 	if (currentPosition == sequence.length) {
 		setButtonActive(false);
 		increaseSequence();
+		document.getElementById('scoreScore').innerHTML = sequence.length;
+		updateHighscore();
 		currentPosition = 0;
 		setTimeout(playSequence, 500);
 	}
 }
 
+// When a false button is pressed and the player loses the game.
 function loseGame() {
 	setButtonActive(false);
 	game = false;
+	document.getElementById('scoreText').innerHTML = "Last game: ";
 	sequence = [0,0,0,0];
 	setTimeout(playSequence, 300);
+}
+
+// Updates the highscore.
+function updateHighscore() {
+	if (sequence.lentgh > highscore){
+		highscore = sequence.length;
+		saveHighscore(highscore);
+		document.getElementById('highscoreScore').innerHTML = highscore;
+	}
+}
+
+// Saves the current highscore to a cookie.
+function saveHighscore(score) {
+	document.cookie = "highscore="+score+"; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+}
+
+// Tries to read the highscore from a cookie and sets the global var highscore to that value. Sets highscore to 0 and creates a new cookie if no cookie is found.
+function checkForHighscore() {
+	var highscoreCookie = readCookie("highscore");
+	if (highscoreCookie == "") {
+		highscore = 0;
+		saveHighscore(0);
+	} else {
+		highscore = parseInt(highscoreCookie);
+	}
+	document.getElementById('highscoreScore').innerHTML = highscore;
+}
+
+// Reads a cookie.
+function readCookie(name) {
+	var nameEQ = name + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0;i < ca.length;i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1,c.length);
+		if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	}
+	return "";
 }
