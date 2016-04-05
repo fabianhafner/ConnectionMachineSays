@@ -128,12 +128,6 @@ body {
   transition: transform 0.233s cubic-bezier(0, 0, 0.21, 1) 0.1s;
   transition: transform 0.233s cubic-bezier(0, 0, 0.21, 1) 0.1s, -webkit-transform 0.233s cubic-bezier(0, 0, 0.21, 1) 0.1s;
   z-index: 1000; }
-  
-@media screen and (max-width: 570px) {
-	.header {
-		font-size: 18px;
-	}
-}
 
 @media screen and (max-width: 570px) {
 	.header {
@@ -292,10 +286,12 @@ h1 {
 }
 
 dialog {
+  position: absolute;
   border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 0px;
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
   font-size: 20px;
+  background-color: #E4E4E4;
 }
 dialog::backdrop {
   position: fixed;
@@ -303,5 +299,23 @@ dialog::backdrop {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dialogTable{
+	font-size: 1em;
+	height:18.5em;
+	width:18.5em;
+}
+
+@media screen and (max-height: 700px) {
+	dialog {
+		font-size: 15px;
+	}
+}
+
+@media screen and (max-height: 510px) {
+	dialog{
+		font-size: 13px;
+	}
 }
