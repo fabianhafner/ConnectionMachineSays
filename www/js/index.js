@@ -96,6 +96,12 @@ function connectLedPi() {
 
 console.log('Found device with name ledpi-teco: MAC address is ' + macAddress);
 	
+	var parentElement = document.getElementById('status');
+	var searchingElement = parentElement.querySelector('.searching');
+	var connectingElement = parentElement.querySelector('.connecting');
+	searchingElement.setAttribute('style', 'display:none;');
+	connectingElement.setAttribute('style', 'display:block;');
+	
 	// Connect to device.
 	console.log('Connecting to ' + macAddress);
 	bluetoothSerial.connect(macAddress, connectSuccess, connectFailure);
@@ -104,6 +110,7 @@ console.log('Found device with name ledpi-teco: MAC address is ' + macAddress);
 // Called when listing of bonded devices fails.
 function listFailure() {	
 	console.log('Listing bonded devices failed.');
+	
 	var parentElement = document.getElementById('status');
 	var searchingElement = parentElement.querySelector('.searching');
 	var noPiElement = parentElement.querySelector('.noList');
@@ -114,12 +121,6 @@ function listFailure() {
 // Called when connection to device is established.
 function connectSuccess() {
 	console.log('Connected to ' + macAddress);
-	
-	var parentElement = document.getElementById('status');
-	var searchingElement = parentElement.querySelector('.searching');
-	var connectingElement = parentElement.querySelector('.connecting');
-	searchingElement.setAttribute('style', 'display:none;');
-	connectingElement.setAttribute('style', 'display:block;');
 	
 	// Write handshake.
 	handshake();
@@ -220,10 +221,14 @@ function handshakeReadSuccess(resp) {
 // Changes the curent connection mode
 function connectionChange(isConnected){
 	connected = isConnected;
+	var mode = document.getElementById('mode');
+	var mode_small = document.getElementById('mode_small');
 	if(connected){
-		document.getElementById('mode').innerHTML="Connection Machine Mode";
+		mode.innerHTML = "";
+		mode_small.innerHTML = "";
 	} else {
-		document.getElementById('mode').innerHTML="Offline Mode";
+		mode.innerHTML = "Offline Mode";
+		mode_small.innerHTML = "Offline";
 	}
 }
 
@@ -261,7 +266,7 @@ function registerClick(button) {
 	clearTimeout(timer);
 	updateMatrix(button);
 	updateButtons(button);
-	timer = setTimeout(clearScreen, 300);
+	timer = setTimeout(clearScreen, 100);
 	if (game) {
 		if (button == sequence[currentPosition]){
 			correctButton();
@@ -279,6 +284,9 @@ function playSequence() {
 	autoplay = true;
 	var current = 0;
 	setButtonActive(false);
+	if (game){
+		document.getElementById('startStatus').value = "Memorize the sequence.";
+	}
 	if (connected){
 		document.getElementById('machineActivePopup').showModal();
 	}
@@ -288,8 +296,11 @@ function playSequence() {
 			clearInterval(autoplayer);
 			setButtonActive(true);
 			autoplay = false;
-			if(connected){
+			if (connected){
 				document.getElementById('machineActivePopup').close();
+			}
+			if (game){
+				document.getElementById('startStatus').value = "Enter the sequence.";
 			}
 		} else {
 			updateMatrix(sequence[current]);
@@ -381,8 +392,10 @@ function startGame() {
 	increaseSequence();
 	currentPosition = 0;
 	document.getElementById('scoreText').innerHTML = "Current round: ";
-	document.getElementById('scoreScore').innerHTML = sequence.length;
+	document.getElementById('scoreScore').innerHTML = sequence.length-1;
 	updateHighscore();
+	var startStatus = document.getElementById('startStatus');
+	startStatus.disabled = true;
 	playSequence();
 }
 
@@ -397,7 +410,7 @@ function correctButton() {
 	if (currentPosition == sequence.length) {
 		setButtonActive(false);
 		increaseSequence();
-		document.getElementById('scoreScore').innerHTML = sequence.length;
+		document.getElementById('scoreScore').innerHTML = sequence.length-1;
 		updateHighscore();
 		currentPosition = 0;
 		setTimeout(playSequence, 500);
@@ -411,12 +424,22 @@ function loseGame() {
 	document.getElementById('scoreText').innerHTML = "Last game: ";
 	sequence = [0,0,0,0];
 	setTimeout(playSequence, 300);
+	var startStatus = document.getElementById('startStatus');
+	startStatus.value = "Game Over";
+	startStatus.style.backgroundColor = "#BD0023";
+	setTimeout(restoreStartButton, 2900);
 }
+
+function restoreStartButton(){
+	var startStatus = document.getElementById('startStatus');
+	startStatus.value = "Start";
+	startStatus.style.backgroundColor = "#4B946A";
+	startStatus.disabled = false;}
 
 // Updates the highscore.
 function updateHighscore() {
-	if (sequence.length > highscore){
-		highscore = sequence.length;
+	if (sequence.length-1 > highscore){
+		highscore = sequence.length-1;
 		window.localStorage.setItem('highscore', highscore);
 		document.getElementById('highscoreScore').innerHTML = highscore;
 	}

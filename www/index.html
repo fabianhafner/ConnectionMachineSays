@@ -12,8 +12,11 @@
 		<dialog id="machineActivePopup">
 		<p>Please look at the Connection Machine.</p>
 		</dialog>
-        <div class="app">
-            <h1>Connection Machine Says</h1>
+        <header class="header">
+            <h1 class=header__title>Connection Machine Says</h1>
+            <h1 class=header__title__small>CM Says</h1>
+			<span class=header__mode id="mode">Offline Mode</span>
+			<span class=header__mode__small id="mode_small">Offline</span>
             <div id="status" class="blink">
                 <p class="event listening">Preparing Device</p>
                 <p class="event received">Device Ready</p>
@@ -25,7 +28,7 @@
 				<p class="bluetooth noList">Detection of bonded devices failed.</p>
 				<p class="bluetooth noConnection">Can't connect to ledpi-teco.</p>
             </div>
-        </div>
+        </header>
 		<div class="gameWrapper">
 			<table class="gameBoard">
 				<tr>
@@ -39,14 +42,13 @@
 			</table>
 			<br>
 			<div class="controls">
-				<input id="start" class="controlButton" type="button" value="Start" onclick="startGame();"/><br>
-				<input id="toggle" class="controlButton" type="button" value="Play Sequence" onclick="playSequence();"/>
+				<input id="startStatus" class="startStatusButton" type="button" value="Start" onclick="startGame();"/><br>
 			</div>
-		</div>
-		<div class="scorePanel">
-			<p id="highscoreText">Highscore: </p><span id="highscoreScore">0</span>
-			<p id="scoreText">Current round: </p><span id="scoreScore">0</span>
-			<p id="mode">Offline Mode</p>
+			<br>
+			<div class="scorePanel">
+				<span class="scoreLeft"> <span id="highscoreText">Highscore: </span><span id="highscoreScore">0</span> </span>
+				<span class="scoreRight"> <span id="scoreText">Current round:  </span><span id="scoreScore">0</span> </span>
+			</div>
 		</div>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
