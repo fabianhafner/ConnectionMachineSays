@@ -9,6 +9,26 @@
         <title>Connection Machine Says</title>
     </head>
     <body>
+		<dialog id="machineActivePopup">
+			<table class="dialogTable">
+				<tr>
+					<td>Please look at the <b>Connection Machine</b>.</td>
+				</tr>
+			</table>
+		</dialog>
+		<dialog id="helpAboutPopup" onclick="closeHelp();">
+			<!-- <div class="closeX" onclick="closeHelp();">X</div> -->
+			<div class="helpText">
+				<p>This game can be used with the <b>Connection Machine.</b></p>
+				<p>To do this, just connect to the <b>Bluetooth</b> device called <b>ledpi-teco</b> and (re)start the app.</p>
+				<p>If successful, the <b>connection indicators</b> in the header bar will turn <green>green</green> and the <red>Offline Mode</red> text will disappear.</p>
+				<p>Pressed buttons will now be displayed on the screens of the <b>Connection Machine</b>.</p>
+				<hr>
+				<p>Developed for the lecture <b>Mobile Computing and Internet of Things</b> at <b>KIT</b> during WS 15/16</p>
+				<p>Uses the <b>BluetoothSerial</b> plug-in for Phonegap</p>
+				<p>Fabian Hafner, 2016</p>
+			</div>
+		</dialog>
         <header class="header">
             <h1 class=header__title>Connection Machine Says</h1>
             <h1 class=header__title__small>CM Says</h1>
@@ -27,9 +47,6 @@
             </div>
         </header>
 		<div class="gameWrapper">
-		<dialog id="machineActivePopup">
-		<p>Please look at the Connection Machine.</p>
-		</dialog>
 			<table class="gameBoard">
 				<tr>
 					<td><input id="button1" class="gameButton" type="button" value="1" onclick="registerClick(1);"/></td>
@@ -43,10 +60,11 @@
 			<br>
 			<div class="controls">
 				<input id="startStatus" class="startStatusButton" type="button" value="Start" onclick="startGame();"/><br>
+				<input id="help" class="helpButton" type="button" value="About/Help" onclick="showHelp();"/><br>
 			</div>
 			<br>
 			<div class="scorePanel">
-				<span class="scoreLeft"> <span id="highscoreText">Highscore: </span><span id="highscoreScore">0</span> </span>
+				<span class="scoreLeft"> <span id="highscoreText">Highscore: </span> <span id="highscoreScore">0</span> </span>
 				<span class="scoreRight"> <span id="scoreText">Current round:  </span><span id="scoreScore">0</span> </span>
 			</div>
 		</div>

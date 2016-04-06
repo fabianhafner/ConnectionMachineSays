@@ -229,6 +229,14 @@ function connectionChange(isConnected){
 	} else {
 		mode.innerHTML = "Offline Mode";
 		mode_small.innerHTML = "Offline";
+		var parentElement = document.getElementById('status');
+		var searchingElement = parentElement.querySelector('.searching');
+	    var connectingElement = parentElement.querySelector('.connecting');
+		var readyElement = parentElement.querySelector('.ready');
+		searchingElement.setAttribute('style', 'display:none;');
+		connectingElement.setAttribute('style', 'display:none;');
+		readyElement.setAttribute('style', 'display:none;');
+		document.getElementById('machineActivePopup').close();
 	}
 }
 
@@ -266,7 +274,7 @@ function registerClick(button) {
 	clearTimeout(timer);
 	updateMatrix(button);
 	updateButtons(button);
-	timer = setTimeout(clearScreen, 100);
+	timer = setTimeout(clearScreen, 200);
 	if (game) {
 		if (button == sequence[currentPosition]){
 			correctButton();
@@ -454,4 +462,12 @@ function checkForHighscore() {
 		highscore = window.localStorage.getItem('highscore');
 	}
 	document.getElementById('highscoreScore').innerHTML = highscore;
+}
+
+function showHelp() {
+	document.getElementById('helpAboutPopup').showModal();
+}
+
+function closeHelp() {
+	document.getElementById('helpAboutPopup').close();
 }
